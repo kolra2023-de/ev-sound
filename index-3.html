@@ -463,3 +463,96 @@ showToast('📱 블루투스 연결 후 GPS 시작을 탭하세요');
 </script>
 </body>
 </html>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>EV Active Sound Design</title>
+</head>
+<body>
+    <h1>GPS 연동 전기차 가상 사운드</h1>
+    <button onclick="initAudio()">사운드 엔진 시작</button>
+    <br><br>
+    <label>테스트용 속도 조절 (0 ~ 150 km/h): </label>
+    <input type="range" id="speedSlider" min="0" max="150" value="0" oninput="updateSpeed(this.value)">
+    <span id="speedValue">0 km/h</span>
+
+    <script>
+        let audioCtx;
+        let mainOsc, subOsc;
+        let mainGain, subGain;
+
+        function initAudio() {
+            if (audioCtx) return;
+            
+            // 1. 오디오 컨텍스트 생성
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+            // 2. 메인 고주파 모터음 오실레이터 (사인파)
+            mainOsc = audioCtx.createOscillator();
+            mainOsc.type = 'sine';
+            mainGain = audioCtx.createGain();
+            
+            // 3. 서브 저주파 웅웅거림 오실레이터 (삼각파)
+            subOsc = audioCtx.createOscillator();
+            subOsc.type = 'triangle';
+            subGain = audioCtx.createGain();
+
+            // 4. 노이즈 필터링 (바람소리 및 마찰음 효과 추가용)
+            let filter = audioCtx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(200, audioCtx.currentTime);
+
+            // 연결 설정
+            mainOsc.connect(mainGain);
+            mainGain.connect(audioCtx.destination);
+
+            subOsc.connect(subGain);
+            subGain.connect(filter);
+            filter.connect(audioCtx.destination);
+
+            // 초기 볼륨은 0으로 설정
+            mainGain.gain.setValueAtTime(0, audioCtx.currentTime);
+            subGain.gain.setValueAtTime(0, audioCtx.currentTime);
+
+            // 오실레이터 시작
+            mainOsc.start();
+            subOsc.start();
+            
+            alert("사운드 엔진이 활성화되었습니다. 슬라이더를 움직여보세요!");
+        }
+
+        // GPS 속도 데이터(또는 슬라이더 값)를 받아 사운드를 변형하는 핵심 함수
+        function updateSpeed(speed) {
+            document.getElementById('speedValue').innerText = speed + " km/h";
+            if (!audioCtx) return;
+
+            let currentT = audioCtx.currentTime;
+            let s = parseFloat(speed);
+
+            if (s <= 1) {
+                // 정차 중일 때는 아주 미세한 대기음(Idle)만 발생
+                mainOsc.frequency.setTargetAtTime(60, currentT, 0.1);
+                mainGain.gain.setTargetAtTime(0.02, currentT, 0.1);
+                
+                subOsc.frequency.setTargetAtTime(30, currentT, 0.1);
+                subGain.gain.setTargetAtTime(0.05, currentT, 0.1);
+            } else {
+                // [핵심 로직] 속도가 올라갈수록 주파수(Pitch)와 볼륨(Volume)이 상승
+                // 1. 메인 모터음 고음역대 계산 (기본 80Hz + 속도비례)
+                let mainPitch = 80 + (s * 3.5); 
+                mainOsc.frequency.setTargetAtTime(mainPitch, currentT, 0.1);
+                
+                // 2. 서브 모터음 저음역대 계산 (기본 40Hz + 속도비례)
+                let subPitch = 40 + (s * 1.8);
+                subOsc.frequency.setTargetAtTime(subPitch, currentT, 0.1);
+
+                // 속도가 빠를수록 모터 소리가 커짐 (최대 볼륨 제한)
+                let targetVolume = Math.min(0.02 + (s / 400), 0.3);
+                mainGain.gain.setTargetAtTime(targetVolume, currentT, 0.1);
+                subGain.gain.setTargetAtTime(targetVolume * 1.5, currentT, 0.1);
+            }
+        }
+    </script>
+</body>
+</html>
