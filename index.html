@@ -104,7 +104,7 @@ main{min-width:0;min-height:0;display:flex;flex-direction:column}
 <section class="ctrl">
 <div class="lab"><span>볼륨</span><b id="volText">40%</b></div>
 <input id="volRange" type="range" min="0" max="100" value="40">
-<div class="meta" style="margin-top:9px">배기음은 저음이 강하므로 처음에는 낮은 볼륨으로 확인하세요.</div>
+<div class="meta" style="margin-top:9px">블루투스 안전 튜닝 적용: 초저역·과도한 왜곡·중복 재생을 억제했습니다.</div>
 </section>
 </aside>
 <main>
@@ -159,49 +159,65 @@ layers:f[12].map((x,j)=>({type:x[0],ratio:x[1]*(1+(i-2)*.006*(j+1)),gain:x[2]}))
 })});
 
 let mode='ev',family='all',selected=null,speed=15,volume=.4;
-let ctx=null,master=null,bass=null,filter=null,comp=null,shape=null,nodes=[],gps=null,gpsOn=false,timer=null;
+let ctx=null,master=null,bass=null,highpass=null,filter=null,preGain=null,comp=null,shape=null,nodes=[],gps=null,gpsOn=false,timer=null;
 const $=id=>document.getElementById(id);
 
 function toast(s){$('toast').textContent=s;$('toast').classList.add('show');clearTimeout(timer);timer=setTimeout(()=>$('toast').classList.remove('show'),1800)}
-function ac(){const C=window.AudioContext||window.webkitAudioContext;if(!C)throw new Error('Web Audio 미지원');if(!ctx)ctx=new C();if(ctx.state==='suspended')ctx.resume().catch(()=>{});return ctx}
+function ac(){const C=window.AudioContext||window.webkitAudioContext;if(!C)throw new Error('Web Audio 미지원');if(!ctx)ctx=new C({latencyHint:'playback'});if(ctx.state==='suspended')ctx.resume().catch(()=>{});return ctx}
 function curve(a){const n=1024,c=new Float32Array(n);for(let i=0;i<n;i++){const x=i*2/n-1;c[i]=(1+a)*x/(1+a*Math.abs(x))}return c}
 function evGain(v){if(v<=20)return 1;if(v>=80)return .02;return Math.pow(1-(v-20)/60,1.5)*.98+.02}
 function exGain(v){return .35+Math.min(1,v/160)*.65}
 function pitch(p){const m=p.mode==='ev'?100:160,r=Math.min(1,speed/m);return p.base+(p.top-p.base)*Math.pow(r,p.curve)}
-function target(p){return volume*(p.mode==='ev'?evGain(speed):exGain(speed))*(p.mode==='ev'?.20:.16)}
+function target(p){return volume*(p.mode==='ev'?evGain(speed):exGain(speed))*(p.mode==='ev'?.18:.13)}
 
+function releaseVoice(fade=.035){
+ if(!ctx)return;
+ const t=ctx.currentTime,oldNodes=nodes.slice(),oldGraph=[bass,highpass,filter,shape,preGain,comp,master];
+ if(master){try{master.gain.cancelScheduledValues(t);master.gain.setTargetAtTime(0,t,fade)}catch(e){}}
+ nodes=[];master=bass=highpass=filter=preGain=comp=shape=null;
+ setTimeout(()=>{
+  oldNodes.forEach(n=>{try{n.stop&&n.stop();n.disconnect&&n.disconnect()}catch(e){}});
+  oldGraph.forEach(n=>{try{n&&n.disconnect()}catch(e){}})
+ },Math.max(160,fade*1000*7));
+}
 function stop(update=true){
- if(!ctx){selected=null;if(update){updateNow();render()}return}
- const t=ctx.currentTime;if(master)try{master.gain.setTargetAtTime(0,t,.04)}catch(e){}
- const old=nodes.slice(),rest=[bass,filter,comp,shape,master];
- setTimeout(()=>{old.forEach(n=>{try{n.stop&&n.stop();n.disconnect&&n.disconnect()}catch(e){}});rest.forEach(n=>{try{n&&n.disconnect()}catch(e){}})},180);
- nodes=[];master=bass=filter=comp=shape=null;selected=null;$('audioBadge').classList.remove('on');$('audioBadge').textContent='AUDIO OFF';
+ if(ctx)releaseVoice(.035);
+ selected=null;$('audioBadge').classList.remove('on');$('audioBadge').textContent='AUDIO OFF';
  if(update){updateNow();render()}
 }
 function play(id){
  const p=P.find(x=>x.id===id);if(!p)return;
  const c=ac(),t=c.currentTime;
  if(selected===id&&nodes.length){updateAudio();return}
- if(master){try{master.gain.setTargetAtTime(0,t,.03)}catch(e){}}
+ if(master||nodes.length)releaseVoice(.025);
  selected=id;nodes=[];
- master=c.createGain();bass=c.createBiquadFilter();bass.type='lowshelf';filter=c.createBiquadFilter();filter.type='lowpass';comp=c.createDynamicsCompressor();
- comp.threshold.value=-24;comp.knee.value=18;comp.ratio.value=7;comp.attack.value=.006;comp.release.value=.22;
- if(p.mode==='exhaust'){shape=c.createWaveShaper();shape.curve=curve(p.drive);shape.oversample='2x';bass.connect(filter);filter.connect(shape);shape.connect(comp)}
- else{shape=null;bass.connect(filter);filter.connect(comp)}
- comp.connect(master);master.connect(c.destination);
+ master=c.createGain();bass=c.createBiquadFilter();highpass=c.createBiquadFilter();filter=c.createBiquadFilter();preGain=c.createGain();comp=c.createDynamicsCompressor();
+ bass.type='lowshelf';highpass.type='highpass';filter.type='lowpass';
+ comp.threshold.value=-22;comp.knee.value=24;comp.ratio.value=10;comp.attack.value=.004;comp.release.value=.20;
+ bass.connect(highpass);highpass.connect(filter);
+ if(p.mode==='exhaust'){
+  shape=c.createWaveShaper();shape.curve=curve(Math.min(8,p.drive*.32));shape.oversample='4x';filter.connect(shape);shape.connect(preGain)
+ }else{shape=null;filter.connect(preGain)}
+ preGain.connect(comp);comp.connect(master);master.connect(c.destination);
  const r=Math.min(1,speed/(p.mode==='ev'?100:160)),f=pitch(p);
- bass.frequency.value=95;bass.gain.value=p.bass;filter.frequency.value=p.cut0+(p.cut1-p.cut0)*r;filter.Q.value=p.q;
- master.gain.value=0;master.gain.linearRampToValueAtTime(target(p),t+.14);
- const drift=c.createOscillator(),dg=c.createGain();drift.type='sine';drift.frequency.value=p.mode==='ev'?.08:.14;dg.gain.value=p.mode==='ev'?1.1:1.8;drift.connect(dg);drift.start();nodes.push(drift);
+ bass.frequency.value=100;bass.gain.value=Math.min(p.bass,p.mode==='exhaust'?6:4.5);
+ highpass.frequency.value=p.mode==='exhaust'?42:32;highpass.Q.value=.7;
+ filter.frequency.value=Math.min(p.cut0+(p.cut1-p.cut0)*r,p.mode==='exhaust'?2300:6800);filter.Q.value=Math.min(p.q,1.1);
+ preGain.gain.value=p.mode==='exhaust'?.46:.66;
+ master.gain.value=0;master.gain.linearRampToValueAtTime(target(p),t+.16);
+ const drift=c.createOscillator(),dg=c.createGain();drift.type='sine';drift.frequency.value=p.mode==='ev'?.08:.14;dg.gain.value=p.mode==='ev'?.75:1.15;drift.connect(dg);drift.start();nodes.push(drift,dg);
  const total=p.layers.reduce((a,b)=>a+b.gain,0)||1;
- p.layers.forEach((l,i)=>{const o=c.createOscillator(),g=c.createGain();o.type=l.type;o.frequency.value=f*l.ratio;o.detune.value=(i-1)*2;g.gain.value=(l.gain/total)*.78;dg.connect(o.frequency);o.connect(g);g.connect(bass);o.start();nodes.push(o)});
- $('audioBadge').classList.add('on');$('audioBadge').textContent='AUDIO ON';updateNow();render();toast(p.name)
+ p.layers.forEach((l,i)=>{const o=c.createOscillator(),g=c.createGain();o.type=l.type;o.frequency.value=f*l.ratio;o.detune.value=(i-1)*1.5;g.gain.value=(l.gain/total)*.58;dg.connect(o.frequency);o.connect(g);g.connect(bass);o.start();nodes.push(o,g)});
+ $('audioBadge').classList.add('on');$('audioBadge').textContent='AUDIO ON · BT SAFE';updateNow();render();toast(p.name)
 }
 function updateAudio(){
- if(!ctx||!selected||!nodes.length)return;
- const p=P.find(x=>x.id===selected),t=ctx.currentTime,f=pitch(p);let oi=0;
- nodes.forEach(n=>{if(n.frequency&&typeof n.frequency.setTargetAtTime==='function'){if(oi===0)n.frequency.setTargetAtTime(p.mode==='ev'?.08:.14,t,.1);else{const l=p.layers[oi-1];if(l)n.frequency.setTargetAtTime(f*l.ratio,t,.1)}oi++}});
- const r=Math.min(1,speed/(p.mode==='ev'?100:160));filter.frequency.setTargetAtTime(p.cut0+(p.cut1-p.cut0)*r,t,.1);master.gain.setTargetAtTime(target(p),t,.08)
+ if(!ctx||!selected||!nodes.length||!master||!filter)return;
+ const p=P.find(x=>x.id===selected),t=ctx.currentTime,f=pitch(p);
+ const oscillators=nodes.filter(n=>n&&n.frequency&&typeof n.start==='function');
+ oscillators.forEach((o,i)=>{if(i===0)o.frequency.setTargetAtTime(p.mode==='ev'?.08:.14,t,.12);else{const l=p.layers[i-1];if(l)o.frequency.setTargetAtTime(f*l.ratio,t,.12)}});
+ const r=Math.min(1,speed/(p.mode==='ev'?100:160));
+ filter.frequency.setTargetAtTime(Math.min(p.cut0+(p.cut1-p.cut0)*r,p.mode==='exhaust'?2300:6800),t,.12);
+ master.gain.cancelScheduledValues(t);master.gain.setTargetAtTime(target(p),t,.10)
 }
 function setSpeed(v,src='SIMULATION'){speed=Math.max(0,Math.min(200,Math.round(+v||0)));$('speed').textContent=speed;$('speedText').textContent=speed+' km/h';$('speedRange').value=Math.min(160,speed);$('src').textContent=src;$('meter').style.width=Math.min(100,speed/160*100)+'%';updateAudio()}
 function list(){const q=$('search').value.trim().toLowerCase();return P.filter(p=>p.mode===mode&&(family==='all'||p.family===family)&&(!q||(p.name+' '+p.desc+' '+p.familyLabel).toLowerCase().includes(q)))}
