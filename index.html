@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#06080d">
-<title>EV Acoustic Lab · Realistic Synthesis V3</title>
+<title>EV Acoustic Lab · SoftDrive Synthesis V4</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#06080d;--p:#0c121b;--p2:#111927;--line:#1d2a3a;--tx:#eef7ff;--mu:#73879b;--ac:#39d8ff;--ok:#4be39a;--warn:#ffd166}
@@ -20,7 +20,7 @@ section.ctrl{padding:15px 16px;border-bottom:1px solid var(--line)}.k{font:9px u
 .meter{height:5px;background:var(--line);border-radius:999px;margin:12px 0 13px;overflow:hidden}.meter>i{display:block;height:100%;width:10%;background:linear-gradient(90deg,#39d8ff,#7b6fff)}
 .lab{display:flex;justify-content:space-between;font-size:11px;color:var(--mu);margin-bottom:7px}.lab.gap{margin-top:14px}
 input[type=range]{width:100%;appearance:none;height:4px;background:var(--line);border-radius:999px;outline:none}input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;border-radius:50%;background:#fff}
-.quick{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;margin-top:9px}.quick button,.nav button,.gps,.demo,.listen button{border:1px solid var(--line);background:var(--p2);color:var(--tx);border-radius:9px;padding:8px 5px;font-size:10px}
+.quick{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;margin-top:9px}.fine{display:grid;grid-template-columns:92px 1fr 92px;gap:6px;align-items:center;margin-top:8px}.fine span{text-align:center;font:9px ui-monospace,monospace;color:var(--mu)}.fine button,.quick button,.nav button,.gps,.demo,.listen button{border:1px solid var(--line);background:var(--p2);color:var(--tx);border-radius:9px;padding:8px 5px;font-size:10px}
 .actionrow{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:11px}.gps,.demo{width:100%;margin:0;color:var(--ac);border-color:#39d8ff55;background:#39d8ff0d;font-weight:700}.gps.on,.demo.on{color:var(--ok);border-color:#4be39a66;background:#4be39a10}
 .listen{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}.listen button.active{color:#fff;border-color:#39d8ff66;background:#39d8ff14}
 .modebox{margin-top:11px;border:1px solid var(--line);background:#ffffff05;border-radius:10px;padding:10px}.modebox b{display:block;font-size:11px;margin-bottom:4px}.modebox p{font-size:10px;color:var(--mu);line-height:1.5}
@@ -33,27 +33,28 @@ main{min-width:0;min-height:0;display:flex;flex-direction:column}.toolbar{paddin
 .wrap{flex:1;min-height:0;overflow:auto;padding:13px 14px 24px}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(235px,1fr));gap:9px}.card{position:relative;background:var(--p);border:1px solid var(--line);border-radius:13px;padding:12px;cursor:pointer;overflow:hidden}.card.active{border-color:var(--c);box-shadow:0 0 0 1px var(--c),0 10px 30px #0008}
 .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}.tag{font:700 9px ui-monospace,monospace;border:1px solid;border-radius:6px;padding:3px 7px}.play{width:29px;height:29px;border-radius:50%;border:1px solid;background:transparent;color:inherit}.name{font-size:13px;font-weight:800;margin-bottom:4px}.desc{font-size:10px;color:#657a90;line-height:1.5;min-height:30px}.spec{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}.spec span{font:8px ui-monospace,monospace;color:var(--mu);border:1px solid var(--line);border-radius:5px;padding:3px 6px;background:#ffffff05}.mini{height:17px;display:flex;gap:2px;align-items:center;margin-top:8px}.mini i{flex:1;max-width:8px;border-radius:2px;background:var(--c);opacity:.7}
 .toast{position:fixed;top:58px;left:50%;transform:translate(-50%,-10px);opacity:0;transition:.2s;background:#17202d;border:1px solid #2b3a4e;border-radius:9px;padding:9px 14px;font:11px ui-monospace,monospace;z-index:99}.toast.show{opacity:1;transform:translate(-50%,0)}
-@media(max-width:920px){body{height:auto;min-height:100vh;overflow:auto}.app{display:flex;flex-direction:column}.wrap{overflow:visible}aside{border-right:0;border-bottom:1px solid var(--line)}}@media(max-width:520px){.grid{grid-template-columns:1fr}.speed{font-size:58px}}
+@media(max-width:920px){body{height:auto;min-height:100vh;overflow:auto}.app{display:flex;flex-direction:column}.wrap{overflow:visible}aside{border-right:0;border-bottom:1px solid var(--line)}}@media(max-width:520px){.grid{grid-template-columns:1fr}.speed{font-size:58px}.fine{grid-template-columns:82px 1fr 82px}}
 </style>
 </head>
 <body>
-<header><div class="logo">✦ EV ACOUSTIC LAB · PHYSICAL SYNTHESIS V3</div><div class="badge" id="audioBadge">AUDIO OFF</div></header>
+<header><div class="logo">✦ EV ACOUSTIC LAB · SOFTDRIVE SYNTHESIS V4</div><div class="badge" id="audioBadge">AUDIO OFF</div></header>
 <div class="app">
 <aside>
 <section class="ctrl">
 <div class="k">주행 상태</div>
 <div class="speedrow"><div class="speed" id="speed">15</div><div class="unit">km/h</div><div class="src" id="src">SIMULATION</div></div>
 <div class="meter"><i id="meter"></i></div>
-<div class="lab"><span>차량 속도</span><b id="speedText">15 km/h</b></div><input id="speedRange" type="range" min="0" max="180" value="15">
+<div class="lab"><span>차량 속도</span><b id="speedText">15 km/h</b></div><input id="speedRange" type="range" min="0" max="180" step="1" value="15">
+<div class="fine"><button data-step="-1">− 1 km/h</button><span>1 km/h 단위 · 부드러운 연속 보간</span><button data-step="1">+ 1 km/h</button></div>
 <div class="quick"><button data-v="0">0</button><button data-v="10">10</button><button data-v="20">20</button><button data-v="30">30</button><button data-v="60">60</button><button data-v="100">100</button></div>
 <div class="lab gap"><span>가속 페달 / 모터 부하</span><b id="loadText">35%</b></div><input id="loadRange" type="range" min="0" max="100" value="35">
 <div class="listen"><button class="active" data-listen="cabin">차량 실내</button><button data-listen="exterior">차량 외부</button></div>
-<div class="actionrow"><button class="gps" id="gpsBtn">📍 GPS 실제 속도</button><button class="demo" id="demoBtn">▶ 가속 시연</button></div>
-<div class="modebox"><b id="modeTitle">실차 기반 전기차 합성</b><p id="modeDesc">속도·부하에 따라 모터 전기주파수, 감속기, PWM, AVAS, 노면음이 각각 다르게 변합니다.</p></div>
+<div class="actionrow"><button class="gps" id="gpsBtn">📍 GPS 실제 속도</button><button class="demo" id="demoBtn">▶ 1 km 가속 시연</button></div>
+<div class="modebox"><b id="modeTitle">부드러운 전기차 음향 합성</b><p id="modeDesc">금속성 기어·PWM을 억제하고, 1 km/h마다 저·중역의 부드러운 전기 음색이 자연스럽게 변합니다.</p></div>
 <div class="notice" id="notice"></div>
 </section>
-<section class="ctrl now"><div class="k">현재 재생</div><h2 id="nowName">사운드를 선택하세요</h2><div class="meta" id="nowMeta">카드를 누르면 물리 합성 엔진이 시작됩니다.</div><div class="wave off" id="wave"></div><div class="nav"><button id="prev">◀ 이전</button><button class="stop" id="stop">■ 정지</button><button id="next">다음 ▶</button></div></section>
-<section class="ctrl"><div class="lab"><span>마스터 볼륨</span><b id="volText">35%</b></div><input id="volRange" type="range" min="0" max="100" value="35"><div class="meta" style="margin-top:9px">차량 블루투스 안전 체인: 38 Hz 하이패스 · 12 kHz 로우패스 · 소프트 리미터 · 중복 노드 방지</div></section>
+<section class="ctrl now"><div class="k">현재 재생</div><h2 id="nowName">사운드를 선택하세요</h2><div class="meta" id="nowMeta">카드를 누르면 부드러운 전기차 합성 엔진이 시작됩니다.</div><div class="wave off" id="wave"></div><div class="nav"><button id="prev">◀ 이전</button><button class="stop" id="stop">■ 정지</button><button id="next">다음 ▶</button></div></section>
+<section class="ctrl"><div class="lab"><span>마스터 볼륨</span><b id="volText">35%</b></div><input id="volRange" type="range" min="0" max="100" value="35"><div class="meta" style="margin-top:9px">차량 블루투스 소프트 체인: 45 Hz 하이패스 · 7.2 kHz 로우패스 · 완만한 컴프레서 · 1 km/h 연속 보간</div></section>
 </aside>
 <main>
 <div class="toolbar"><div class="searchrow"><input class="search" id="search" placeholder="모터, AVAS, 듀얼 모터, 인버터 검색"><div class="count" id="count"></div></div><div class="tabs"><button class="tab active" data-mode="ev">전기차 100</button><button class="tab" data-mode="exhaust">배기음 20</button></div><div class="chips" id="chips"></div></div>
@@ -67,13 +68,14 @@ class EVPhysicalSynth extends AudioWorkletProcessor {
     super();
     this.profile=null; this.active=false;
     this.speed=0; this.speedTarget=0; this.load=.35; this.loadTarget=.35; this.listener=0; this.listenerTarget=0;
-    this.ph=new Float64Array(24); this.noiseLP=0; this.noiseSlow=0; this.noiseRLP=0; this.noiseRSlow=0;
-    this.seed=0x12345678; this.lastSpeed=0; this.accel=0; this.master=0; this.masterTarget=0;
+    this.ph=new Float64Array(32);
+    this.noiseA=0; this.noiseB=0; this.noiseC=0; this.noiseRA=0; this.noiseRB=0; this.noiseRC=0;
+    this.seed=0x12345678; this.master=0; this.masterTarget=0;
     this.port.onmessage=e=>{
       const d=e.data||{};
       if(d.type==='profile'){this.profile=d.profile;this.active=true;this.masterTarget=1}
       if(d.type==='state'){
-        if(Number.isFinite(d.speed))this.speedTarget=Math.max(0,Math.min(220,d.speed));
+        if(Number.isFinite(d.speed))this.speedTarget=Math.round(Math.max(0,Math.min(220,d.speed)));
         if(Number.isFinite(d.load))this.loadTarget=Math.max(0,Math.min(1,d.load));
         if(Number.isFinite(d.listener))this.listenerTarget=d.listener?1:0;
       }
@@ -84,66 +86,65 @@ class EVPhysicalSynth extends AudioWorkletProcessor {
   adv(i,hz){let p=this.ph[i]+6.283185307179586*Math.max(0,hz)/sampleRate;if(p>6.283185307179586)p-=6.283185307179586*Math.floor(p/6.283185307179586);this.ph[i]=p;return p}
   clamp(x,a,b){return x<a?a:x>b?b:x}
   smoothstep(a,b,x){const t=this.clamp((x-a)/(b-a),0,1);return t*t*(3-2*t)}
-  soft(x){return Math.tanh(x*1.28)*.78}
+  soft(x){return Math.tanh(x*.92)*.88}
   evSample(p,speed,load,listener){
-    const v=Math.max(0,speed), n=this.clamp(v/180,0,1);
-    const wheelHz=(v/3.6)/Math.max(1.7,p.wheelCirc);
-    const mechHz=wheelHz*p.finalDrive;
-    const elecHz=Math.max(0.15,mechHz*p.polePairs*p.pitchScale);
-    const moving=this.smoothstep(.3,5,v);
-    const torque=.12+.88*Math.pow(load,.68);
-    const ripple=Math.sin(this.adv(20,Math.max(.18,mechHz*p.rippleOrder)))*p.fmDepth*(.25+.75*load);
-    let motor=0, dual=0;
-    for(let j=0;j<p.orders.length&&j<5;j++){
-      const o=p.orders[j], hz=elecHz*o[0]*(1+ripple);
-      if(hz<sampleRate*.43){
-        const ph=this.adv(j,hz);
-        motor+=o[1]*(Math.sin(ph)+p.roughness*.24*Math.sin(ph*2.01+.7));
-        if(p.dualDetune){const ph2=this.adv(5+j,hz*(1+p.dualDetune*(.45+.55*load)));dual+=o[1]*Math.sin(ph2+.18)}
-      }
-    }
-    const motorEnv=p.motorGain*moving*(.10+.90*Math.pow(n,.52))*torque;
-    motor*=motorEnv;
-    dual*=motorEnv*p.dualGain;
+    const v=Math.max(0,speed), n=this.clamp(v/180,0,1), moving=this.smoothstep(.2,3.2,v);
+    const id=Math.max(1,p.id||1), family=Math.floor((id-1)/5), variant=(id-1)%5;
 
-    const gearHz=this.clamp(mechHz*p.gearOrder,28,4800);
-    const gph=this.adv(10,gearHz);
-    const gear=(Math.sin(gph)+.28*Math.sin(gph*2.02+.3)+.09*Math.sin(gph*3.01))*p.gearGain*moving*Math.pow(n,.58)*(.3+.7*load);
+    // 실제 회전수 직결 대신 포화형 피치 곡선 사용: 저속부터 고속까지 급격히 치솟지 않음.
+    const base=64+(family%10)*4.1+Math.floor(family/10)*6+(variant-2)*1.4;
+    const rise=82+(family%5)*8+(variant===2?8:variant===3?-5:variant===4?3:0);
+    const curve=1-Math.exp(-v/(68+(family%4)*10));
+    const loadPitch=1+load*.0045;
+    const f=(base+rise*curve)*loadPitch*(p.pitchScale||1);
 
-    const sideHz=Math.max(.2,elecHz*p.sideOrder);
-    const side=.55+.45*Math.sin(this.adv(11,sideHz));
-    const carrierHz=this.clamp(p.carrier*(.96+.07*n+.025*load),1800,sampleRate*.41);
-    const carrier=Math.sin(this.adv(12,carrierHz))*side*p.carrierGain*moving*(.2+.8*load)*(.48+.47*listener);
+    // 느린 호흡감과 극미세 코러스만 사용. 거친 FM·기어 메시·PWM 캐리어는 제거.
+    const breathe=1+.0016*Math.sin(this.adv(26,.075+(family%3)*.012));
+    const f0=f*breathe;
+    const ph0=this.adv(0,f0);
+    const warmth=.72+(family%5)*.045;
+    const fundamental=Math.sin(ph0)*(.78+.08*Math.cos(this.adv(27,.11)));
+    const h2=Math.sin(this.adv(1,f0*2.001)+.22)*(.085+.025*(1-warmth));
+    const h3=Math.sin(this.adv(2,f0*3.0005)+.55)*(.018+.012*(variant===4));
 
-    const cut=p.avasCut;
-    const avFade=1-this.smoothstep(cut-6,cut+8,v);
-    const avBase=p.avasBase+v*p.avasSlope;
-    let avas=0;
-    for(let j=0;j<p.avasIntervals.length&&j<3;j++){
-      const ph=this.adv(13+j,avBase*p.avasIntervals[j]);
-      let s=Math.sin(ph);
-      if(p.avasWave==='pulse')s=Math.tanh(1.55*(Math.sin(ph)+.35*Math.sin(ph*3)));
-      else if(p.avasWave==='crystal')s=Math.sin(ph)+.16*Math.sin(ph*3.02)+.07*Math.sin(ph*5.01);
-      else if(p.avasWave==='turbine')s=Math.sin(ph)*(.72+.28*Math.sin(this.adv(21+j,.22+j*.07)));
-      else if(p.avasWave==='hum')s=.86*Math.sin(ph)+.22*Math.sin(ph*.5+.4);
-      avas+=s*(j===0?.68:j===1?.24:.12);
-    }
-    avas*=p.avasGain*avFade*(.64+.86*listener)*(.72+.28*(1-load));
+    const ratios=[1.25,1.333333,1.5,1.666667,2.0];
+    const ratio=ratios[family%ratios.length];
+    const companion=Math.sin(this.adv(3,f0*ratio*(1+.0007*(variant-2)))+.4)*(.075+.012*variant);
+    const sub=Math.sin(this.adv(4,Math.max(42,f0*.5))+.15)*(.08+.018*(family%3));
 
-    const bodyHz=p.bodyHz+Math.min(48,mechHz*.08);
-    const body=Math.sin(this.adv(18,bodyHz))*p.bodyGain*moving*Math.pow(n,.72)*(1.0-.58*listener);
+    // 0~42 km/h에서는 보행자 경고음을 '패드'처럼 부드럽게 겹침.
+    const avFade=1-this.smoothstep(30,46,v);
+    const avBase=82+(family%7)*7+v*(.24+.025*(variant%3));
+    const av1=Math.sin(this.adv(8,avBase));
+    const av2=Math.sin(this.adv(9,avBase*(variant%2?1.25:1.5))+.62);
+    const av3=Math.sin(this.adv(10,avBase*.5)+.18);
+    const avas=(av1*.62+av2*.21+av3*.17)*avFade*(p.cat==='저속 AVAS'?.16:.07)*(listener?.98:.58);
 
-    const wL=this.rnd(),wR=this.rnd();
-    this.noiseLP+=.055*(wL-this.noiseLP);this.noiseSlow+=.009*(wL-this.noiseSlow);
-    this.noiseRLP+=.051*(wR-this.noiseRLP);this.noiseRSlow+=.008*(wR-this.noiseRSlow);
-    const roadL=(this.noiseLP-this.noiseSlow)*p.roadGain*Math.pow(n,1.08)*(1.15-.70*listener);
-    const roadR=(this.noiseRLP-this.noiseRSlow)*p.roadGain*Math.pow(n,1.08)*(1.15-.70*listener);
-    const windL=(wL-this.noiseLP)*p.windGain*Math.pow(n,1.72)*(.68+.32*listener);
-    const windR=(wR-this.noiseRLP)*p.windGain*Math.pow(n,1.72)*(.68+.32*listener);
+    // 고주파 금속음 대신 둥근 중역 '전기 공기감'.
+    const sheenFreq=420+(family%6)*48+curve*(180+(variant*24));
+    const sheen=Math.sin(this.adv(11,sheenFreq)+.3)*(.012+.004*variant)*moving*Math.pow(n,.62)*(listener?.86:.48);
 
-    const mono=motor+gear+carrier+avas+body+dual*.5;
-    const spread=p.stereoWidth;
-    return [mono+dual*spread+roadL+windL,mono-dual*spread+roadR+windR];
+    // 부하 변화는 피치보다 음량과 밀도에 반영.
+    const toneEnv=moving*(.105+.72*Math.pow(n,.48))*(.42+.52*Math.pow(load,.72));
+    const tonal=(fundamental+h2+h3+companion+sub)*toneEnv*(p.cat==='컨셉 EV'?1.03:.90);
+
+    // 저역 차체 공명은 매우 완만하게 이동.
+    const bodyHz=58+(family%6)*5+curve*22;
+    const body=Math.sin(this.adv(12,bodyHz))*(.025+.006*(family%4))*moving*Math.pow(n,.62)*(listener?.42:.92);
+
+    // 부드러운 노면/풍절음: 거친 백색 잡음이 아니라 다단 저역 통과 노이즈.
+    const wL=this.rnd(), wR=this.rnd();
+    this.noiseA+=.018*(wL-this.noiseA); this.noiseB+=.0045*(this.noiseA-this.noiseB); this.noiseC+=.0012*(this.noiseB-this.noiseC);
+    this.noiseRA+=.017*(wR-this.noiseRA); this.noiseRB+=.0042*(this.noiseRA-this.noiseRB); this.noiseRC+=.0011*(this.noiseRB-this.noiseRC);
+    const roadAmt=(.026+(family%5)*.0025)*Math.pow(n,1.12)*(listener?.50:1.0);
+    const windAmt=(.009+(variant)*.0018)*Math.pow(n,1.75)*(listener?.95:.54);
+    const roadL=(this.noiseB-this.noiseC)*roadAmt*4.0, roadR=(this.noiseRB-this.noiseRC)*roadAmt*4.0;
+    const windL=(this.noiseA-this.noiseB)*windAmt*1.8, windR=(this.noiseRA-this.noiseRB)*windAmt*1.8;
+
+    const width=.025+.012*(family%4);
+    const side=Math.sin(this.adv(13,f0*1.0012)+.9)*width*toneEnv;
+    const mono=tonal+avas+sheen+body;
+    return [mono+side+roadL+windL,mono-side+roadR+windR];
   }
   exhaustSample(p,speed,load,listener){
     const n=this.clamp(speed/180,0,1);
@@ -152,25 +153,29 @@ class EVPhysicalSynth extends AudioWorkletProcessor {
     const beat=Math.sin(this.adv(20,fire*.5))*p.irregularity;
     let pulse=0;
     const hs=p.harmonics;
-    for(let i=0;i<hs.length&&i<6;i++){const ph=this.adv(i,fire*hs[i][0]*(1+beat*.006));pulse+=hs[i][1]*Math.sin(ph+i*.21)}
-    const rumblePh=this.adv(8,Math.max(22,fire*.25));
-    const rumble=(Math.sin(rumblePh)+.35*Math.sin(rumblePh*2.03))*p.rumble;
-    const w=this.rnd();this.noiseLP+=.045*(w-this.noiseLP);
-    const exhaustNoise=this.noiseLP*p.noise*(.25+.75*load);
-    const turbo=Math.sin(this.adv(12,this.clamp(1400+n*p.turboSweep,1200,sampleRate*.4)))*p.turboGain*n*load;
-    const env=(.16+.84*Math.pow(n,.55))*(.28+.72*Math.pow(load,.7));
-    const mono=(pulse*p.pulseGain+rumble+exhaustNoise)*env+turbo;
-    return [mono*(.92+.16*listener),mono*(.92+.11*listener)];
+    for(let i=0;i<hs.length&&i<6;i++){const ph=this.adv(16+i,fire*hs[i][0]*(1+beat*.006));pulse+=hs[i][1]*Math.sin(ph+i*.21)}
+    const rumblePh=this.adv(24,Math.max(22,fire*.25));
+    const rumble=(Math.sin(rumblePh)+.28*Math.sin(this.adv(25,Math.max(44,fire*.5))))*p.rumble;
+    const w=this.rnd();this.noiseA+=.025*(w-this.noiseA);
+    const exhaustNoise=this.noiseA*p.noise*(.18+.62*load);
+    const env=(.14+.76*Math.pow(n,.55))*(.26+.68*Math.pow(load,.7));
+    const mono=(pulse*p.pulseGain+rumble+exhaustNoise)*env;
+    return [mono*(listener?1.04:.90),mono*(listener?1.01:.90)];
   }
   process(inputs,outputs){
     const out=outputs[0],L=out[0],R=out[1]||out[0];
-    const ks=1-Math.exp(-1/(sampleRate*.095)),kl=1-Math.exp(-1/(sampleRate*.075)),km=1-Math.exp(-1/(sampleRate*.030));
+    // 1 km/h 목표값을 약 1.05초에 걸쳐 연속 보간. 큰 속도 점프도 급격히 치솟지 않음.
+    const ks=1-Math.exp(-1/(sampleRate*1.05));
+    const kl=1-Math.exp(-1/(sampleRate*.32));
+    const km=1-Math.exp(-1/(sampleRate*.075));
     for(let i=0;i<L.length;i++){
-      this.speed+=(this.speedTarget-this.speed)*ks;this.load+=(this.loadTarget-this.load)*kl;this.listener+=(this.listenerTarget-this.listener)*kl;
+      this.speed+=(this.speedTarget-this.speed)*ks;
+      this.load+=(this.loadTarget-this.load)*kl;
+      this.listener+=(this.listenerTarget-this.listener)*kl;
       this.master+=(this.masterTarget-this.master)*km;
       let lr=[0,0];
       if(this.profile&&this.master>.0001)lr=this.profile.kind==='exhaust'?this.exhaustSample(this.profile,this.speed,this.load,this.listener):this.evSample(this.profile,this.speed,this.load,this.listener);
-      L[i]=this.soft(lr[0]*this.master);R[i]=this.soft(lr[1]*this.master);
+      L[i]=this.soft(lr[0]*this.master); R[i]=this.soft(lr[1]*this.master);
     }
     return true;
   }
@@ -232,7 +237,7 @@ const EXMOD=['SOFT','ROAD','SPORT','TRACK','MAX'];
 EXBASE.forEach((a,ai)=>EXMOD.forEach((n,mi)=>P.push({...a,id:101+ai*5+mi,mode:'exhaust',kind:'exhaust',family:a.key,familyLabel:a.label,name:`${a.label} ${n}`,driveMode:n,desc:a.desc,color:a.color,pulseGain:a.pulseGain*(.78+mi*.10),rumble:a.rumble*(.82+mi*.12),noise:a.noise*(.8+mi*.10),turboGain:a.turboGain*(.7+mi*.16)})));
 
 let mode='ev',family='all',selected=null,speed=15,load=.35,volume=.35,listener='cabin';
-let ctx=null,worklet=null,master=null,hp=null,lp=null,comp=null,gps=null,gpsOn=false,timer=null,switchToken=0,demoRaf=0,demoStart=0;
+let ctx=null,worklet=null,master=null,hp=null,lp=null,comp=null,gps=null,gpsOn=false,timer=null,switchToken=0,demoTimer=0;
 function toast(s){$('toast').textContent=s;$('toast').classList.add('show');clearTimeout(timer);timer=setTimeout(()=>$('toast').classList.remove('show'),1800)}
 async function ensureAudio(){
   const C=window.AudioContext||window.webkitAudioContext;if(!C)throw new Error('이 브라우저는 Web Audio를 지원하지 않습니다.');
@@ -243,46 +248,62 @@ async function ensureAudio(){
     await ctx.audioWorklet.addModule(url);URL.revokeObjectURL(url);
     worklet=new AudioWorkletNode(ctx,'ev-physical-synth',{numberOfInputs:0,numberOfOutputs:1,outputChannelCount:[2]});
     hp=ctx.createBiquadFilter();lp=ctx.createBiquadFilter();comp=ctx.createDynamicsCompressor();master=ctx.createGain();
-    hp.type='highpass';hp.frequency.value=38;hp.Q.value=.68;lp.type='lowpass';lp.frequency.value=12000;lp.Q.value=.65;
-    comp.threshold.value=-18;comp.knee.value=18;comp.ratio.value=5.5;comp.attack.value=.004;comp.release.value=.16;master.gain.value=0;
+    hp.type='highpass';hp.frequency.value=45;hp.Q.value=.62;lp.type='lowpass';lp.frequency.value=7200;lp.Q.value=.58;
+    comp.threshold.value=-20;comp.knee.value=26;comp.ratio.value=3.2;comp.attack.value=.018;comp.release.value=.32;master.gain.value=0;
     worklet.connect(hp);hp.connect(lp);lp.connect(comp);comp.connect(master);master.connect(ctx.destination);
   }
   if(ctx.state==='suspended')await ctx.resume();
 }
-function outputTarget(){return volume*(mode==='ev'?.72:.64)}
+function outputTarget(){return volume*(mode==='ev'?.62:.58)}
 async function play(id){
   const p=P.find(x=>x.id===id);if(!p)return;
   try{await ensureAudio()}catch(e){showNotice(e.message);return}
   const token=++switchToken;selected=id;updateNow();render();
-  const t=ctx.currentTime;master.gain.cancelScheduledValues(t);master.gain.setTargetAtTime(0,t,.018);
-  setTimeout(()=>{if(token!==switchToken||!worklet)return;worklet.port.postMessage({type:'profile',profile:p});worklet.port.postMessage({type:'state',speed,load,listener:listener==='exterior'?1:0});const now=ctx.currentTime;master.gain.cancelScheduledValues(now);master.gain.setTargetAtTime(outputTarget(),now,.045)},55);
-  $('audioBadge').classList.add('on');$('audioBadge').textContent='AUDIO ON · PHYSICAL';toast(p.name)
+  const t=ctx.currentTime;master.gain.cancelScheduledValues(t);master.gain.setTargetAtTime(0,t,.055);
+  setTimeout(()=>{if(token!==switchToken||!worklet)return;worklet.port.postMessage({type:'profile',profile:p});worklet.port.postMessage({type:'state',speed,load,listener:listener==='exterior'?1:0});const now=ctx.currentTime;master.gain.cancelScheduledValues(now);master.gain.setTargetAtTime(outputTarget(),now,.11)},55);
+  $('audioBadge').classList.add('on');$('audioBadge').textContent='AUDIO ON · SOFTDRIVE';toast(p.name)
 }
-function stop(update=true){++switchToken;stopDemo();if(master&&ctx){const t=ctx.currentTime;master.gain.cancelScheduledValues(t);master.gain.setTargetAtTime(0,t,.035);setTimeout(()=>worklet?.port.postMessage({type:'active',value:false}),180)}selected=null;$('audioBadge').classList.remove('on');$('audioBadge').textContent='AUDIO OFF';if(update){updateNow();render()}}
-function updateAudio(){if(worklet)worklet.port.postMessage({type:'state',speed,load,listener:listener==='exterior'?1:0});if(master&&ctx&&selected){const t=ctx.currentTime;master.gain.cancelScheduledValues(t);master.gain.setTargetAtTime(outputTarget(),t,.06)}}
+function stop(update=true){++switchToken;stopDemo();if(master&&ctx){const t=ctx.currentTime;master.gain.cancelScheduledValues(t);master.gain.setTargetAtTime(0,t,.08);setTimeout(()=>worklet?.port.postMessage({type:'active',value:false}),180)}selected=null;$('audioBadge').classList.remove('on');$('audioBadge').textContent='AUDIO OFF';if(update){updateNow();render()}}
+function updateAudio(){if(worklet)worklet.port.postMessage({type:'state',speed,load,listener:listener==='exterior'?1:0});if(master&&ctx&&selected){const t=ctx.currentTime;master.gain.cancelScheduledValues(t);master.gain.setTargetAtTime(outputTarget(),t,.12)}}
 function setSpeed(v,src='SIMULATION'){speed=Math.max(0,Math.min(220,Math.round(+v||0)));$('speed').textContent=speed;$('speedText').textContent=speed+' km/h';$('speedRange').value=Math.min(180,speed);$('src').textContent=src;$('meter').style.width=Math.min(100,speed/180*100)+'%';updateAudio()}
 function setLoad(v){load=Math.max(0,Math.min(1,+v));$('loadRange').value=Math.round(load*100);$('loadText').textContent=Math.round(load*100)+'%';updateAudio()}
+function list(){const q=$('search').value.trim().toLowerCase();return P.filter(p=>p.mode===mode&&(family==='all'||p.family===family)&&(!q||(p.name+' '+p.desc+' '+p.familyLabel+' '+(p.topology||'')).toLowerCase().includes(q)))}
 function chipDefs(){if(mode==='exhaust')return [['all','전체'],...EXBASE.map(x=>[x.key,x.label])];return [['all','전체'],['cat-real','실차 모터 60'],['cat-avas','저속 AVAS 25'],['cat-concept','컨셉 EV 15'],...ARCH.map(x=>[x.key,x.label])]}
 function familyMatch(p,f){if(f==='all')return true;if(f==='cat-real')return p.cat==='실차 모터';if(f==='cat-avas')return p.cat==='저속 AVAS';if(f==='cat-concept')return p.cat==='컨셉 EV';return p.family===f}
 function list(){const q=$('search').value.trim().toLowerCase();return P.filter(p=>p.mode===mode&&familyMatch(p,family)&&(!q||(p.name+' '+p.desc+' '+p.familyLabel+' '+(p.topology||'')).toLowerCase().includes(q)))}
 function renderChips(){const arr=chipDefs();$('chips').innerHTML=arr.map(x=>`<button class="chip ${family===x[0]?'active':''}" data-f="${x[0]}">${x[1]}</button>`).join('');document.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{family=b.dataset.f;renderChips();render()})}
 function mini(p){return Array.from({length:15},(_,i)=>`<i style="height:${5+Math.abs(Math.sin((i+1)*(p.id%9+2)))*12}px"></i>`).join('')}
-function render(){const a=list();$('count').textContent=`${a.length} SOUNDS`;$('grid').innerHTML=a.map(p=>`<article class="card ${selected===p.id?'active':''}" data-id="${p.id}" style="--c:${p.color}"><div class="top"><span class="tag" style="color:${p.color};border-color:${p.color}66">${p.mode==='ev'?p.cat:p.familyLabel}</span><button class="play" style="color:${p.color};border-color:${p.color}66">${selected===p.id?'■':'▶'}</button></div><div class="name">${String(p.id).padStart(3,'0')} · ${p.name}</div><div class="desc">${p.desc}</div><div class="spec">${p.mode==='ev'?`<span>${p.topology}</span><span>${p.polePairs} POLE PAIRS</span><span>PWM ${Math.round(p.carrier/100)/10}k</span>`:`<span>${p.cylinders} CYL</span><span>${p.idle}-${p.redline} RPM</span><span>${p.driveMode}</span>`}</div><div class="mini">${mini(p)}</div></article>`).join('');document.querySelectorAll('.card').forEach(c=>c.onclick=()=>{const id=+c.dataset.id;selected===id?stop():play(id)})}
-function updateNow(){const p=P.find(x=>x.id===selected),w=$('wave');if(!p){$('nowName').textContent='사운드를 선택하세요';$('nowName').style.color='';$('nowMeta').textContent='카드를 누르면 물리 합성 엔진이 시작됩니다.';w.classList.add('off');w.innerHTML=Array.from({length:18},(_,i)=>`<i style="height:${6+(i%5)*3}px"></i>`).join('');return}$('nowName').textContent=p.name;$('nowName').style.color=p.color;$('nowMeta').textContent=p.mode==='ev'?`${p.cat} · ${p.topology} · ${p.polePairs}극쌍 · 감속비 ${p.finalDrive.toFixed(1)} · ${p.driveMode}`:`${p.cylinders}기통 · ${p.idle}-${p.redline} rpm · ${p.driveMode}`;w.classList.remove('off');w.innerHTML=Array.from({length:18},(_,i)=>`<i style="height:${8+Math.abs(Math.sin((i+1)*(p.id%7+2)))*18}px;background:${p.color}"></i>`).join('')}
-function changeMode(m){mode=m;family='all';document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.mode===m));$('modeTitle').textContent=m==='ev'?'실차 기반 전기차 합성':'다기통 배기 펄스 합성';$('modeDesc').textContent=m==='ev'?'속도·부하에 따라 모터 전기주파수, 감속기, PWM, AVAS, 노면음이 각각 다르게 변합니다.':'차속에 따른 회전수와 기통별 점화 주파수, 맥동, 터보 휘슬을 합성합니다.';if(selected&&P.find(x=>x.id===selected)?.mode!==m)stop();renderChips();render()}
+function render(){const a=list();$('count').textContent=`${a.length} SOUNDS`;$('grid').innerHTML=a.map(p=>`<article class="card ${selected===p.id?'active':''}" data-id="${p.id}" style="--c:${p.color}"><div class="top"><span class="tag" style="color:${p.color};border-color:${p.color}66">${p.mode==='ev'?p.cat:p.familyLabel}</span><button class="play" style="color:${p.color};border-color:${p.color}66">${selected===p.id?'■':'▶'}</button></div><div class="name">${String(p.id).padStart(3,'0')} · ${p.name}</div><div class="desc">${p.desc}</div><div class="spec">${p.mode==='ev'?`<span>${p.topology}</span><span>SOFT SINE</span><span>1 km/h GLIDE</span>`:`<span>${p.cylinders} CYL</span><span>${p.idle}-${p.redline} RPM</span><span>${p.driveMode}</span>`}</div><div class="mini">${mini(p)}</div></article>`).join('');document.querySelectorAll('.card').forEach(c=>c.onclick=()=>{const id=+c.dataset.id;selected===id?stop():play(id)})}
+function updateNow(){const p=P.find(x=>x.id===selected),w=$('wave');if(!p){$('nowName').textContent='사운드를 선택하세요';$('nowName').style.color='';$('nowMeta').textContent='카드를 누르면 부드러운 전기차 합성 엔진이 시작됩니다.';w.classList.add('off');w.innerHTML=Array.from({length:18},(_,i)=>`<i style="height:${6+(i%5)*3}px"></i>`).join('');return}$('nowName').textContent=p.name;$('nowName').style.color=p.color;$('nowMeta').textContent=p.mode==='ev'?`${p.cat} · ${p.topology} · 부드러운 사인파 · 1 km/h 연속 보간 · ${p.driveMode}`:`${p.cylinders}기통 · ${p.idle}-${p.redline} rpm · ${p.driveMode}`;w.classList.remove('off');w.innerHTML=Array.from({length:18},(_,i)=>`<i style="height:${8+Math.abs(Math.sin((i+1)*(p.id%7+2)))*18}px;background:${p.color}"></i>`).join('')}
+function changeMode(m){mode=m;family='all';document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.mode===m));$('modeTitle').textContent=m==='ev'?'부드러운 전기차 음향 합성':'다기통 배기 펄스 합성';$('modeDesc').textContent=m==='ev'?'금속성 기어·PWM을 억제하고, 1 km/h마다 저·중역의 부드러운 전기 음색이 자연스럽게 변합니다.':'차속에 따른 회전수와 기통별 점화 주파수, 맥동, 터보 휘슬을 합성합니다.';if(selected&&P.find(x=>x.id===selected)?.mode!==m)stop();renderChips();render()}
 function move(d){const a=list();if(!a.length)return;let i=a.findIndex(x=>x.id===selected);if(i<0)i=d>0?-1:0;i=(i+d+a.length)%a.length;play(a[i].id);document.querySelector(`.card[data-id="${a[i].id}"]`)?.scrollIntoView({behavior:'smooth',block:'center'})}
 function showNotice(s){$('notice').textContent=s;$('notice').style.display=s?'block':'none'}
 function stopGPS(){if(gps!==null)navigator.geolocation.clearWatch(gps);gps=null;gpsOn=false;$('gpsBtn').classList.remove('on');$('gpsBtn').textContent='📍 GPS 실제 속도';$('speedRange').disabled=false;showNotice('')}
 async function startGPS(){try{await ensureAudio()}catch(e){showNotice(e.message);return}if(!window.isSecureContext){showNotice('GPS는 HTTPS GitHub Pages 주소에서만 작동합니다.');return}if(!navigator.geolocation){showNotice('현재 브라우저는 위치 기능을 지원하지 않습니다.');return}$('gpsBtn').textContent='⏳ GPS 연결 중…';gps=navigator.geolocation.watchPosition(p=>{gpsOn=true;const v=Number.isFinite(p.coords.speed)&&p.coords.speed>0?p.coords.speed*3.6:0;setSpeed(v,'GPS');$('gpsBtn').classList.add('on');$('gpsBtn').textContent='📡 GPS 연동 중';$('speedRange').disabled=true;showNotice('')},e=>{showNotice(e.code===1?'위치 권한을 허용해 주세요.':'GPS 신호를 확인할 수 없습니다.');stopGPS()},{enableHighAccuracy:true,maximumAge:800,timeout:15000})}
-function stopDemo(){if(demoRaf)cancelAnimationFrame(demoRaf);demoRaf=0;$('demoBtn').classList.remove('on');$('demoBtn').textContent='▶ 가속 시연'}
-function startDemo(){if(gpsOn){toast('GPS를 먼저 중지하세요');return}if(!selected){toast('사운드를 먼저 선택하세요');return}if(demoRaf){stopDemo();return}demoStart=performance.now();$('demoBtn').classList.add('on');$('demoBtn').textContent='■ 시연 중지';const step=now=>{const t=(now-demoStart)/1000;let v,l;if(t<8){const x=t/8;v=140*x*x*(3-2*x);l=.32+.62*Math.sin(Math.PI*x)}else if(t<12){const x=(t-8)/4;v=140-(115*x*x*(3-2*x));l=.22}else{stopDemo();setSpeed(25);setLoad(.25);return}setSpeed(v,'DEMO');setLoad(l);demoRaf=requestAnimationFrame(step)};demoRaf=requestAnimationFrame(step)}
+function stopDemo(){if(demoTimer)clearInterval(demoTimer);demoTimer=0;$('demoBtn').classList.remove('on');$('demoBtn').textContent='▶ 1 km 가속 시연'}
+function startDemo(){
+  if(gpsOn){toast('GPS를 먼저 중지하세요');return}
+  if(!selected){toast('사운드를 먼저 선택하세요');return}
+  if(demoTimer){stopDemo();return}
+  let v=Math.max(0,Math.min(120,Math.round(speed)));
+  if(v>=120)v=0;
+  setSpeed(v,'DEMO');setLoad(.42);
+  $('demoBtn').classList.add('on');$('demoBtn').textContent='■ 시연 중지';
+  demoTimer=setInterval(()=>{
+    v+=1;
+    if(v>120){stopDemo();setSpeed(25,'SIMULATION');setLoad(.28);return}
+    setSpeed(v,'DEMO');
+  },190);
+}
 
 $('speedRange').oninput=e=>{if(!gpsOn){stopDemo();setSpeed(e.target.value)}};document.querySelectorAll('.quick button').forEach(b=>b.onclick=()=>gpsOn?toast('GPS를 먼저 중지하세요'):(stopDemo(),setSpeed(b.dataset.v)));
+document.querySelectorAll('.fine button').forEach(b=>b.onclick=()=>gpsOn?toast('GPS를 먼저 중지하세요'):(stopDemo(),setSpeed(speed+(+b.dataset.step))));
+
 $('loadRange').oninput=e=>{stopDemo();setLoad(+e.target.value/100)};$('volRange').oninput=e=>{volume=+e.target.value/100;$('volText').textContent=e.target.value+'%';updateAudio()};
 document.querySelectorAll('.listen button').forEach(b=>b.onclick=()=>{listener=b.dataset.listen;document.querySelectorAll('.listen button').forEach(x=>x.classList.toggle('active',x===b));updateAudio();toast(listener==='cabin'?'차량 실내 청취':'차량 외부 청취')});
 $('gpsBtn').onclick=()=>gpsOn?stopGPS():startGPS();$('demoBtn').onclick=startDemo;$('prev').onclick=()=>move(-1);$('next').onclick=()=>move(1);$('stop').onclick=()=>stop();$('search').oninput=render;document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>changeMode(b.dataset.mode));
 ['pointerdown','touchstart','click'].forEach(ev=>document.addEventListener(ev,()=>{if(ctx&&ctx.state==='suspended')ctx.resume().catch(()=>{})},{passive:true}));document.addEventListener('visibilitychange',()=>{if(!document.hidden&&ctx&&ctx.state==='suspended')ctx.resume().catch(()=>{})});
-setSpeed(15);setLoad(.35);renderChips();render();updateNow();toast('물리 합성 전기차 100개 준비 완료');
+setSpeed(15);setLoad(.35);renderChips();render();updateNow();toast('부드러운 전기차 음향 100개 준비 완료');
 </script>
 </body>
 </html>
