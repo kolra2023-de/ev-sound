@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#05070b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>EV Sound Lab · Deep Bass 20</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#05070b;--panel:#0b1018;--panel2:#101722;--line:#1b2635;
+  --text:#edf5ff;--muted:#6d8196;--accent:#35d7ff;--ok:#46e38a;--warn:#ffd45a;
+}
+html,body{height:100%;background:var(--bg)}
+body{
+  color:var(--text);font-family:Inter,system-ui,-apple-system,"Noto Sans KR",sans-serif;
+  height:100vh;height:100dvh;overflow:hidden;display:flex;flex-direction:column;
+  -webkit-tap-highlight-color:transparent;user-select:none;
+  padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)
+}
+button,input{font:inherit}
+button,.card,.chip{touch-action:manipulation}
+.topbar{
+  height:48px;flex:0 0 auto;background:#080c12;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;justify-content:space-between;padding:0 18px
+}
+.brand{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;font-weight:800;letter-spacing:.15em;color:var(--accent)}
+.badges{display:flex;gap:7px;align-items:center}
+.badge{font:10px ui-monospace,SFMono-Regular,Consolas,monospace;padding:5px 9px;border:1px solid var(--line);border-radius:999px;color:var(--muted)}
+.badge.on{color:var(--ok);border-color:#46e38a44;background:#46e38a10}
+
+.layout{flex:1;min-height:0;display:grid;grid-template-columns:330px 1fr}
+.sidebar{min-height:0;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;overflow-y:auto}
+.section{padding:18px;border-bottom:1px solid var(--line)}
+.kicker{font:9px ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.2em;color:var(--muted);text-transform:uppercase;margin-bottom:7px}
+.speedline{display:flex;align-items:flex-end;gap:8px}
+.speed{font:700 72px/1 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:-.06em;color:var(--accent);min-width:2.6ch}
+.unit{font:12px ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--muted);padding-bottom:10px}
+.source{font:10px ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--muted);padding-bottom:10px;margin-left:auto}
+.meter{height:5px;background:var(--line);border-radius:999px;margin:14px 0 16px;overflow:hidden}
+.meter>div{height:100%;width:27%;background:linear-gradient(90deg,#35d7ff,#7d6cff);border-radius:inherit;transition:width .25s}
+.control-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;color:var(--muted);font-size:11px}
+.range{width:100%;appearance:none;height:4px;background:var(--line);border-radius:999px;outline:none}
+.range::-webkit-slider-thumb{appearance:none;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 0 0 4px #ffffff12}
+.quick{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}
+.quick button,.control-btn{
+  border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:9px;padding:9px 7px;font-size:11px;cursor:pointer
+}
+.quick button:active,.control-btn:active{transform:scale(.97)}
+.gps-btn{width:100%;margin-top:12px;padding:12px;border:1px solid #35d7ff44;background:#35d7ff0c;color:var(--accent);border-radius:11px;font-weight:700;cursor:pointer}
+.gps-btn.on{border-color:#46e38a66;color:var(--ok);background:#46e38a0d}
+.notice{display:none;margin-top:10px;border:1px solid #ffd45a44;background:#ffd45a0b;color:var(--warn);padding:9px;border-radius:9px;font-size:10px;line-height:1.5}
+
+.now{min-height:116px}
+.now-name{font-size:18px;font-weight:800;line-height:1.25;margin-bottom:4px}
+.now-meta{font:10px ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--muted);line-height:1.5}
+.wave{height:30px;display:flex;align-items:center;gap:3px;margin-top:10px}
+.wave i{display:block;width:4px;border-radius:2px;background:var(--accent);animation:wave .5s ease-in-out infinite alternate}
+.wave.paused i{animation:none;opacity:.35}
+@keyframes wave{from{transform:scaleY(.25)}to{transform:scaleY(1)}}
+.navrow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-top:12px}
+.stop{color:#ff8b8b!important;border-color:#ff8b8b3a!important}
+
+.content{min-width:0;min-height:0;display:flex;flex-direction:column;background:var(--bg)}
+.toolbar{padding:14px 16px;border-bottom:1px solid var(--line);background:#080c12;flex:0 0 auto}
+.searchrow{display:flex;gap:9px;align-items:center}
+.search{
+  flex:1;min-width:0;border:1px solid var(--line);background:var(--panel);color:var(--text);
+  padding:11px 13px;border-radius:11px;outline:none;font-size:13px;user-select:text
+}
+.count{font:10px ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--muted);white-space:nowrap}
+.chips{display:flex;gap:7px;overflow-x:auto;padding-top:10px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{white-space:nowrap;border:1px solid var(--line);background:var(--panel);color:var(--muted);padding:7px 10px;border-radius:999px;font-size:10px;cursor:pointer}
+.chip.active{color:#fff;border-color:#35d7ff66;background:#35d7ff14}
+
+.gridwrap{flex:1;min-height:0;overflow-y:auto;padding:14px 16px 28px;-webkit-overflow-scrolling:touch}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(225px,1fr));gap:10px}
+.card{
+  position:relative;background:var(--panel);border:1px solid var(--line);border-radius:14px;
+  padding:13px;cursor:pointer;overflow:hidden;transition:.16s
+}
+.card:active{transform:scale(.98)}
+.card.active{border-color:var(--c);box-shadow:0 0 0 1px var(--c),0 10px 34px #0008}
+.card.active:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 0 0,var(--c)18,transparent 60%);pointer-events:none}
+.cardtop{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.no{font:9px ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--muted)}
+.family{font:700 9px ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.08em;padding:3px 7px;border:1px solid;border-radius:6px}
+.play{width:30px;height:30px;border:1px solid;border-radius:50%;background:transparent;display:grid;place-items:center;color:inherit}
+.name{font-size:13px;font-weight:800;margin-bottom:4px}
+.desc{font-size:10px;color:#63778b;line-height:1.5;min-height:30px}
+.spec{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+.spec span{font:8px ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--muted);background:#ffffff06;border:1px solid var(--line);padding:3px 6px;border-radius:5px}
+.miniwave{height:18px;display:flex;align-items:center;gap:2px;margin-top:9px}
+.miniwave i{display:block;flex:1;max-width:8px;border-radius:2px;background:var(--c);opacity:.7}
+.empty{display:none;padding:50px 20px;text-align:center;color:var(--muted)}
+.toast{
+  position:fixed;left:50%;top:58px;transform:translate(-50%,-12px);opacity:0;
+  background:#17202d;border:1px solid #2a394d;border-radius:10px;padding:10px 15px;
+  font:11px ui-monospace,SFMono-Regular,Consolas,monospace;transition:.25s;pointer-events:none;z-index:99
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+@media(max-width:900px){
+  body{height:auto;min-height:100vh;overflow:auto}
+  .layout{display:flex;flex-direction:column;overflow:visible}
+  .sidebar{overflow:visible;border-right:0;border-bottom:1px solid var(--line)}
+  .content{overflow:visible}
+  .gridwrap{overflow:visible}
+  .section{padding:14px 16px}
+  .speed{font-size:60px}
+}
+@media(max-width:520px){
+  .topbar{padding:0 12px}.grid{grid-template-columns:1fr}
+  .toolbar{padding:12px}.gridwrap{padding:12px}
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">⚡ EV SOUND LAB · DEEP 20</div>
+  <div class="badges">
+    <div class="badge" id="audioBadge">AUDIO OFF</div>
+    <div class="badge" id="gpsBadge">GPS OFF</div>
+  </div>
+</header>
+
+<main class="layout">
+  <aside class="sidebar">
+    <section class="section">
+      <div class="kicker">미리듣기 속도</div>
+      <div class="speedline">
+        <div class="speed" id="speedNum">40</div>
+        <div class="unit">km/h</div>
+        <div class="source" id="speedSource">SIMULATION</div>
+      </div>
+      <div class="meter"><div id="speedMeter"></div></div>
+      <div class="control-title"><span>속도 조절</span><strong id="speedReadout">40 km/h</strong></div>
+      <input class="range" id="speedSlider" type="range" min="0" max="160" value="40">
+      <div class="quick">
+        <button data-speed="0">0</button><button data-speed="30">30</button>
+        <button data-speed="80">80</button><button data-speed="130">130</button>
+      </div>
+      <button class="gps-btn" id="gpsBtn">📍 GPS 실제 속도 연결</button>
+      <div class="notice" id="notice"></div>
+    </section>
+
+    <section class="section now">
+      <div class="kicker">현재 미리듣기</div>
+      <div class="now-name" id="nowName">사운드를 선택하세요</div>
+      <div class="now-meta" id="nowMeta">카드를 누르면 현재 속도로 바로 재생됩니다.</div>
+      <div class="wave paused" id="wave"></div>
+      <div class="navrow">
+        <button class="control-btn" id="prevBtn">◀ 이전</button>
+        <button class="control-btn stop" id="stopBtn">■ 정지</button>
+        <button class="control-btn" id="nextBtn">다음 ▶</button>
+      </div>
+    </section>
+
+    <section class="section" style="margin-top:auto">
+      <div class="control-title"><span>출력 볼륨</span><strong id="volumeText">45%</strong></div>
+      <input class="range" id="volumeSlider" type="range" min="0" max="100" value="45">
+      <div class="now-meta" style="margin-top:10px">
+        벨벳·썬더 계열을 유지하면서 서브 저음을 조금 강화했습니다. 처음에는 낮은 볼륨으로 확인하세요.
+      </div>
+    </section>
+  </aside>
+
+  <section class="content">
+    <div class="toolbar">
+      <div class="searchrow">
+        <input class="search" id="searchInput" placeholder="벨벳·썬더 저음 사운드 검색">
+        <div class="count" id="countText">20 SOUNDS</div>
+      </div>
+      <div class="chips" id="chips"></div>
+    </div>
+    <div class="gridwrap">
+      <div class="grid" id="grid"></div>
+      <div class="empty" id="empty">검색 결과가 없습니다.</div>
+    </div>
+  </section>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+
+const FAMILY_DEFS = [
+  {
+    key:'velvet', label:'벨벳 딥', color:'#a98cff',
+    desc:'고급 세단형 벨벳 음색에 부드러운 서브 저음을 추가',
+    base:42, top:480, cutoff0:950, cutoff1:3300, q:.72,
+    lfo:.28, depth:1.3, curve:.86, bassFreq:105, bassGain:3.5,
+    layers:[
+      ['sine',1,.46],
+      ['sine',.5,.27],
+      ['sine',.25,.14],
+      ['triangle',1.5,.08]
+    ]
+  },
+  {
+    key:'thunder', label:'썬더 딥', color:'#ffbf4d',
+    desc:'묵직한 토크형 썬더 음색에 낮은 베이스 진동감을 강화',
+    base:30, top:390, cutoff0:720, cutoff1:2700, q:.95,
+    lfo:.24, depth:1.5, curve:.92, bassFreq:88, bassGain:4.8,
+    layers:[
+      ['sine',.5,.39],
+      ['sine',.25,.27],
+      ['triangle',1,.20],
+      ['sine',2,.05]
+    ]
+  }
+];
+
+const VARIANT_NAMES = ['SOFT','DEEP','FLOW','NOIR','LUX','DRIVE','SUB','DARK','TORQUE','MAX'];
+const VARIANT_KO = ['부드러운 저음','은은한 딥베이스','유동적인 저역','어두운 저음','고급 세단형','주행 반응형','서브베이스형','짙은 저음','토크 강조형','최대 저음형'];
+
+const PRESETS = [];
+FAMILY_DEFS.forEach((f, fi)=>{
+  for(let i=0;i<10;i++){
+    const lowFactor = .90 + i*.014;
+    const topFactor = .88 + i*.022;
+    PRESETS.push({
+      id: fi*10+i+1,
+      family:f.key, familyLabel:f.label, color:f.color,
+      name:`${f.label} ${VARIANT_NAMES[i]}`,
+      subtitle:VARIANT_KO[i],
+      desc:f.desc,
+      base:Math.round(f.base*lowFactor),
+      top:Math.round(f.top*topFactor),
+      cutoff0:Math.round(f.cutoff0*(.92+i*.016)),
+      cutoff1:Math.round(f.cutoff1*(.90+i*.022)),
+      q:Math.max(.2,f.q+(i-4.5)*.025),
+      lfo:Math.max(.08,f.lfo*(.82+i*.038)),
+      depth:Math.max(.4,f.depth*(.80+i*.045)),
+      curve:Math.min(1.08,f.curve+(i%5-2)*.022),
+      detune:(i-4.5)*1.15,
+      bassFreq:Math.max(60,Math.round(f.bassFreq-(i*2.2))),
+      bassGain:Math.min(8.5,f.bassGain+i*.38),
+      layers:f.layers.map((x,li)=>({
+        type:x[0],
+        ratio:x[1]*(1+(i-4.5)*.0018*(li+1)),
+        gain:x[2]
+      }))
+    });
+  }
+});
+
+let audioCtx=null, master=null, bassFilter=null, filter=null, compressor=null;
+let activeNodes=[], selectedId=null, currentSpeed=40, volume=.45;
+let gpsWatch=null, gpsOn=false, activeFilter='all', toastTimer=null;
+
+const $ = id => document.getElementById(id);
+
+function toast(msg){
+  $('toast').textContent=msg;
+  $('toast').classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>$('toast').classList.remove('show'),2200);
+}
+
+function ensureAudio(){
+  const Ctor=window.AudioContext||window.webkitAudioContext;
+  if(!Ctor) throw new Error('Web Audio API 미지원');
+  if(!audioCtx) audioCtx=new Ctor();
+  if(audioCtx.state==='suspended') audioCtx.resume().catch(()=>{});
+  return audioCtx;
+}
+
+function stopSound(updateUI=true){
+  if(!audioCtx){
+    selectedId=null;
+    if(updateUI) updateNow();
+    return;
+  }
+  const t=audioCtx.currentTime;
+  if(master){
+    try{master.gain.cancelScheduledValues(t);master.gain.setTargetAtTime(0,t,.05)}catch(e){}
+  }
+  const old=activeNodes.slice();
+  setTimeout(()=>{
+    old.forEach(n=>{try{n.stop();n.disconnect()}catch(e){}});
+    try{bassFilter&&bassFilter.disconnect()}catch(e){}
+    try{filter&&filter.disconnect()}catch(e){}
+    try{compressor&&compressor.disconnect()}catch(e){}
+    try{master&&master.disconnect()}catch(e){}
+  },220);
+  activeNodes=[];master=null;bassFilter=null;filter=null;compressor=null;
+  selectedId=null;
+  $('audioBadge').classList.remove('on');
+  $('audioBadge').textContent='AUDIO OFF';
+  if(updateUI){updateNow();renderCards();}
+}
+
+function pitchFor(p,speed){
+  const r=Math.max(0,Math.min(1,speed/160));
+  return p.base+(p.top-p.base)*Math.pow(r,p.curve);
+}
+function targetGain(speed){
+  const r=Math.max(0,Math.min(1,speed/160));
+  return (.045+r*.115)*volume;
+}
+
+function startPreset(id){
+  const p=PRESETS.find(x=>x.id===id);
+  if(!p) return;
+  const ctx=ensureAudio();
+  const t=ctx.currentTime;
+
+  if(selectedId===id && activeNodes.length){
+    updateAudioParams();
+    return;
+  }
+
+  // 기존 소리를 짧게 페이드아웃
+  if(master){
+    try{master.gain.setTargetAtTime(0,t,.04)}catch(e){}
+    const old=activeNodes.slice(), oldMaster=master, oldBass=bassFilter, oldFilter=filter, oldComp=compressor;
+    setTimeout(()=>{
+      old.forEach(n=>{try{n.stop();n.disconnect()}catch(e){}});
+      try{oldMaster&&oldMaster.disconnect()}catch(e){}
+      try{oldBass&&oldBass.disconnect()}catch(e){}
+      try{oldFilter&&oldFilter.disconnect()}catch(e){}
+      try{oldComp&&oldComp.disconnect()}catch(e){}
+    },180);
+  }
+
+  selectedId=id;activeNodes=[];
+  master=ctx.createGain();
+  bassFilter=ctx.createBiquadFilter();
+  filter=ctx.createBiquadFilter();
+  compressor=ctx.createDynamicsCompressor();
+
+  bassFilter.type='lowshelf';
+  filter.type='lowpass';
+  compressor.threshold.value=-24;
+  compressor.knee.value=18;
+  compressor.ratio.value=6;
+  compressor.attack.value=.008;
+  compressor.release.value=.22;
+
+  bassFilter.connect(filter);
+  filter.connect(compressor);
+  compressor.connect(master);
+  master.connect(ctx.destination);
+
+  const freq=pitchFor(p,currentSpeed);
+  const cutoff=p.cutoff0+(p.cutoff1-p.cutoff0)*Math.min(1,currentSpeed/160);
+  bassFilter.frequency.setValueAtTime(p.bassFreq,t);
+  bassFilter.gain.setValueAtTime(p.bassGain,t);
+  filter.frequency.setValueAtTime(cutoff,t);
+  filter.Q.setValueAtTime(p.q,t);
+  master.gain.setValueAtTime(0,t);
+  master.gain.linearRampToValueAtTime(targetGain(currentSpeed),t+.16);
+
+  const lfo=ctx.createOscillator();
+  const lfoGain=ctx.createGain();
+  lfo.type='sine';
+  lfo.frequency.setValueAtTime(p.lfo+currentSpeed/90,t);
+  lfoGain.gain.setValueAtTime(p.depth,t);
+  lfo.connect(lfoGain);
+  lfo.start(t);
+  activeNodes.push(lfo);
+
+  const totalLayerGain=p.layers.reduce((a,b)=>a+b.gain,0)||1;
+  p.layers.forEach((layer,idx)=>{
+    const osc=ctx.createOscillator();
+    const g=ctx.createGain();
+    osc.type=layer.type;
+    osc.frequency.setValueAtTime(freq*layer.ratio,t);
+    osc.detune.setValueAtTime(p.detune*(idx+1),t);
+    g.gain.setValueAtTime((layer.gain/totalLayerGain)*.82,t);
+    lfoGain.connect(osc.frequency);
+    osc.connect(g);
+    g.connect(bassFilter);
+    osc.start(t);
+    activeNodes.push(osc);
+  });
+
+  $('audioBadge').classList.add('on');
+  $('audioBadge').textContent='AUDIO ON';
+  updateNow();renderCards();
+  toast(`${String(id).padStart(3,'0')} · ${p.name} 재생`);
+}
+
+function updateAudioParams(){
+  if(!audioCtx||!selectedId||!activeNodes.length) return;
+  const p=PRESETS.find(x=>x.id===selectedId);
+  if(!p) return;
+  const t=audioCtx.currentTime;
+  const freq=pitchFor(p,currentSpeed);
+  const oscNodes=activeNodes.filter(n=>n instanceof OscillatorNode);
+  // 첫 번째는 LFO
+  oscNodes.forEach((osc,idx)=>{
+    if(idx===0){
+      osc.frequency.setTargetAtTime(p.lfo+currentSpeed/90,t,.12);
+    }else{
+      const layer=p.layers[idx-1];
+      if(layer) osc.frequency.setTargetAtTime(freq*layer.ratio,t,.10);
+    }
+  });
+  const cutoff=p.cutoff0+(p.cutoff1-p.cutoff0)*Math.min(1,currentSpeed/160);
+  bassFilter.frequency.setTargetAtTime(p.bassFreq,t,.10);
+  bassFilter.gain.setTargetAtTime(p.bassGain,t,.10);
+  filter.frequency.setTargetAtTime(cutoff,t,.10);
+  master.gain.setTargetAtTime(targetGain(currentSpeed),t,.08);
+}
+
+function setSpeed(v,source='SIMULATION'){
+  currentSpeed=Math.max(0,Math.min(200,Math.round(Number(v)||0)));
+  $('speedNum').textContent=currentSpeed;
+  $('speedReadout').textContent=currentSpeed+' km/h';
+  $('speedSlider').value=Math.min(160,currentSpeed);
+  $('speedSource').textContent=source;
+  $('speedMeter').style.width=Math.min(100,currentSpeed/160*100)+'%';
+  $('speedNum').style.color=currentSpeed>=120?'#ff786f':currentSpeed>=70?'#ffd45a':'#35d7ff';
+  updateAudioParams();
+}
+
+function updateNow(){
+  const p=PRESETS.find(x=>x.id===selectedId);
+  const wave=$('wave');
+  if(!p){
+    $('nowName').textContent='사운드를 선택하세요';
+    $('nowMeta').textContent='카드를 누르면 현재 속도로 바로 재생됩니다.';
+    wave.classList.add('paused');
+    wave.innerHTML=Array.from({length:18},(_,i)=>`<i style="height:${6+(i%5)*3}px"></i>`).join('');
+    return;
+  }
+  $('nowName').textContent=`${String(p.id).padStart(3,'0')} · ${p.name}`;
+  $('nowName').style.color=p.color;
+  $('nowMeta').textContent=`${p.familyLabel} · ${p.subtitle} · ${p.base}–${p.top} Hz · 저음 +${p.bassGain.toFixed(1)} dB`;
+  wave.classList.remove('paused');
+  wave.innerHTML=Array.from({length:18},(_,i)=>{
+    const h=8+Math.abs(Math.sin((i+1)*(p.id%7+2)))*20;
+    return `<i style="height:${h}px;background:${p.color};animation-delay:${i*.035}s"></i>`;
+  }).join('');
+}
+
+function renderChips(){
+  const items=[{key:'all',label:'전체 20'},...FAMILY_DEFS.map(f=>({key:f.key,label:f.label+' 10'}))];
+  $('chips').innerHTML=items.map(x=>`<button class="chip ${activeFilter===x.key?'active':''}" data-filter="${x.key}">${x.label}</button>`).join('');
+  $('chips').querySelectorAll('.chip').forEach(btn=>btn.addEventListener('click',()=>{
+    activeFilter=btn.dataset.filter;renderChips();renderCards();
+  }));
+}
+
+function miniWave(p){
+  return Array.from({length:16},(_,i)=>{
+    const h=4+Math.abs(Math.sin((i+1)*(p.id%6+2)*.51))*14;
+    return `<i style="height:${h}px"></i>`;
+  }).join('');
+}
+
+function filteredPresets(){
+  const q=$('searchInput').value.trim().toLowerCase();
+  return PRESETS.filter(p=>{
+    const categoryOK=activeFilter==='all'||p.family===activeFilter;
+    const searchOK=!q||`${p.name} ${p.familyLabel} ${p.subtitle} ${p.desc}`.toLowerCase().includes(q);
+    return categoryOK&&searchOK;
+  });
+}
+
+function renderCards(){
+  const list=filteredPresets();
+  $('countText').textContent=`${list.length} / 20 SOUNDS`;
+  $('empty').style.display=list.length?'none':'block';
+  $('grid').innerHTML=list.map(p=>`
+    <article class="card ${selectedId===p.id?'active':''}" data-id="${p.id}" style="--c:${p.color}">
+      <div class="cardtop">
+        <div>
+          <span class="no">NO.${String(p.id).padStart(3,'0')}</span>
+          <span class="family" style="color:${p.color};border-color:${p.color}55;background:${p.color}10">${p.familyLabel}</span>
+        </div>
+        <button class="play" aria-label="미리듣기" style="color:${p.color};border-color:${p.color}66">${selectedId===p.id?'■':'▶'}</button>
+      </div>
+      <div class="name">${p.name}</div>
+      <div class="desc">${p.subtitle} · ${p.desc}</div>
+      <div class="spec"><span>${p.base}–${p.top} Hz</span><span>LFO ${p.lfo.toFixed(1)}</span><span>${p.layers.length} LAYERS</span><span>BASS +${p.bassGain.toFixed(1)} dB</span></div>
+      <div class="miniwave">${miniWave(p)}</div>
+    </article>`).join('');
+
+  $('grid').querySelectorAll('.card').forEach(card=>card.addEventListener('click',()=>{
+    const id=Number(card.dataset.id);
+    if(selectedId===id) stopSound();
+    else startPreset(id);
+  }));
+}
+
+function movePreset(delta){
+  const list=filteredPresets();
+  if(!list.length) return;
+  let idx=list.findIndex(x=>x.id===selectedId);
+  if(idx<0) idx=delta>0?-1:0;
+  idx=(idx+delta+list.length)%list.length;
+  startPreset(list[idx].id);
+  const el=document.querySelector(`.card[data-id="${list[idx].id}"]`);
+  if(el) el.scrollIntoView({behavior:'smooth',block:'center'});
+}
+
+function showNotice(msg){
+  $('notice').innerHTML=msg;
+  $('notice').style.display=msg?'block':'none';
+}
+
+function stopGPS(){
+  if(gpsWatch!==null){navigator.geolocation.clearWatch(gpsWatch);gpsWatch=null}
+  gpsOn=false;
+  $('gpsBtn').classList.remove('on');
+  $('gpsBtn').textContent='📍 GPS 실제 속도 연결';
+  $('gpsBadge').classList.remove('on');
+  $('gpsBadge').textContent='GPS OFF';
+  $('speedSlider').disabled=false;
+  setSpeed($('speedSlider').value,'SIMULATION');
+  showNotice('');
+}
+
+function startGPS(){
+  ensureAudio();
+  if(!window.isSecureContext){
+    showNotice('GPS는 HTTPS 주소에서만 작동합니다. GitHub Pages 주소로 접속해 주세요.');
+    return;
+  }
+  if(!navigator.geolocation){
+    showNotice('현재 브라우저에서 위치 기능을 사용할 수 없습니다.');
+    return;
+  }
+  $('gpsBtn').textContent='⏳ GPS 연결 중…';
+  showNotice('');
+  gpsWatch=navigator.geolocation.watchPosition(pos=>{
+    gpsOn=true;
+    const raw=pos.coords.speed;
+    const kmh=Number.isFinite(raw)&&raw>0?raw*3.6:0;
+    setSpeed(kmh,'GPS');
+    $('gpsBtn').classList.add('on');
+    $('gpsBtn').textContent='📡 GPS 연동 중 · 탭하면 중지';
+    $('gpsBadge').classList.add('on');
+    $('gpsBadge').textContent='GPS ON';
+    $('speedSlider').disabled=true;
+  },err=>{
+    const msg=err.code===1?'위치 권한이 차단되었습니다. 브라우저 사이트 설정에서 위치를 허용하세요.'
+      :err.code===2?'GPS 신호를 찾지 못했습니다. 신호가 잘 잡히는 곳에서 다시 시도하세요.'
+      :'GPS 연결 시간이 초과되었습니다. 다시 시도하세요.';
+    showNotice(msg);stopGPS();
+  },{enableHighAccuracy:true,maximumAge:800,timeout:15000});
+}
+
+$('speedSlider').addEventListener('input',e=>{if(!gpsOn)setSpeed(e.target.value,'SIMULATION')});
+document.querySelectorAll('.quick button').forEach(btn=>btn.addEventListener('click',()=>{
+  if(gpsOn)return toast('GPS를 먼저 중지하세요');
+  setSpeed(btn.dataset.speed,'SIMULATION');
+}));
+$('volumeSlider').addEventListener('input',e=>{
+  volume=Number(e.target.value)/100;
+  $('volumeText').textContent=e.target.value+'%';
+  updateAudioParams();
+});
+$('gpsBtn').addEventListener('click',()=>gpsOn?stopGPS():startGPS());
+$('prevBtn').addEventListener('click',()=>movePreset(-1));
+$('nextBtn').addEventListener('click',()=>movePreset(1));
+$('stopBtn').addEventListener('click',()=>stopSound());
+$('searchInput').addEventListener('input',renderCards);
+
+['pointerdown','touchstart','click'].forEach(ev=>{
+  document.addEventListener(ev,()=>{
+    if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume().catch(()=>{});
+  },{passive:true});
+});
+document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden&&audioCtx&&audioCtx.state==='suspended')audioCtx.resume().catch(()=>{});
+});
+
+renderChips();renderCards();updateNow();setSpeed(40,'SIMULATION');
+toast('벨벳·썬더 저음 20개 중 카드를 눌러 미리 들어보세요');
+</script>
+</body>
+</html>
